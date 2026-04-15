@@ -9,235 +9,26 @@
 </head>
 
 <?php
-$attributes = [
-    "crash_date",
-    "posted_speed_limit",
-    "traffic_control_device",
-    "device_condition",
-    "weather_condition",
-    "lighting_condition",
-    "first_crash_type",
-    "trafficway_type",
-    "alignment",
-    "roadway_surface_cond",
-    "road_defect",
-    "report_type",
-    "crash_type",
-    "intersection_related_i",
-    "hit_and_run_i",
-    "damage",
-    "date_police_notified",
-    "prim_contributory_cause",
-    "sec_contributory_cause",
-    "street_no",
-    "street_direction",
-    "street_name",
-    "beat_of_occurrence",
-    "num_units",
-    "most_severe_injury",
-    "injuries_total",
-    "injuries_fatal",
-    "injuries_incapacitating",
-    "injuries_non_incapacitating",
-    "injuries_reported_not_evident",
-    "injuries_no_indication",
-    "injuries_unknown",
-    "crash_hour",
-    "crash_day_of_week",
-    "crash_month",
-    "latitude",
-    "longitude",
-    "location",
-];
 
-# Using separate list for user friendly names
-$attribute_names = [
-    "Date",
-    "Speed Limit",
-    "Traffic Control Device",
-    "Traffic Control Device Condition",
-    "Weather",
-    "Lighting",
-    "First Crash Type",
-    "Trafficway",
-    "Alignment",
-    "Roadway Surface Condition",
-    "Road Defect",
-    "Report Type",
-    "Crash Type",
-    "Intersection Related",
-    "Hit and Run",
-    "Damage",
-    "Date Police Notified",
-    "Primary Contributory Cause",
-    "Secondary Contributory Cause",
-    "Street Number",
-    "Street Direction",
-    "Street Name",
-    "Beat of Occurrence",
-    "Number of Units",
-    "Most Severe Injury",
-    "Total Injuries",
-    "Fatal Injuries",
-    "Incapacitating Injuries",
-    "Non-Incapacitating Injuries",
-    "Reported But Not Evident Injuries",
-    "No Indication Injuries",
-    "Unknown Injuries",
-    "Hour",
-    "Week",
-    "Month",
-    "Latitude",
-    "Longitude",
-    "Location",
-];
+$servername = "localhost";
+$username = "root";  //user name
+$password = "";  //password used to login MySQL server - replace with your own password if you have one set
+$dbname = "trafficcrash";
 
-$attributeSections = [
+// Create connection
+$conn = new mysqli($servername, $username, $password, $dbname);
 
-    "Time & Date" => [
-        "crash_date",
-        "date_police_notified",
-        "crash_hour",
-        "crash_day_of_week",
-        "crash_month",
-    ],
+// Check connection
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
 
-    "Location" => [
-        "street_no",
-        "street_direction",
-        "street_name",
-        "beat_of_occurrence",
-        "location",
-    ],
+require_once "query_metadata.php";
 
-    "Environmental Conditions" => [
-        "weather_condition",
-        "lighting_condition",
-    ],
-
-    "Roadway & Infrastructure" => [
-        "posted_speed_limit",
-        "traffic_control_device",
-        "device_condition",
-        "trafficway_type",
-        "alignment",
-        "roadway_surface_cond",
-        "road_defect",
-    ],
-
-    "Crash Characteristics" => [
-        "first_crash_type",
-        "crash_type",
-        "intersection_related_i",
-        "hit_and_run_i",
-        "num_units",
-        "damage",
-        "prim_contributory_cause",
-        "sec_contributory_cause",
-    ],
-
-    "Injury & Severity" => [
-        "most_severe_injury",
-        "injuries_total",
-        "injuries_fatal",
-        "injuries_incapacitating",
-        "injuries_non_incapacitating",
-        "injuries_reported_not_evident",
-        "injuries_no_indication",
-        "injuries_unknown",
-    ],
-
-    "Administrative / Reporting" => [
-        "report_type",
-    ],
-
-    "Coordinates" => [
-        "latitude",
-        "longitude",
-    ],
-];
-
-# Dynamically generate these by querying the database (instead of manually typing)
-$attributeTypes = [
-    "crash_date" => "date",
-    "posted_speed_limit" => "number",
-    "traffic_control_device" => "category",
-    "device_condition" => "category",
-    "weather_condition" => "category",
-    "lighting_condition" => "category",
-    "first_crash_type" => "category",
-    "trafficway_type" => "category",
-    "alignment" => "category",
-    "roadway_surface_cond" => "category",
-    "road_defect" => "category",
-    "report_type" => "category",
-    "crash_type" => "category",
-    "intersection_related_i" => "boolean",
-    "hit_and_run_i" => "boolean",
-    "damage" => "number",
-    "date_police_notified" => "date",
-    "prim_contributory_cause" => "category",
-    "sec_contributory_cause" => "category",
-    "street_no" => "number",
-    "street_direction" => "category",
-    "street_name" => "text",
-    "beat_of_occurrence" => "category",
-    "num_units" => "number",
-    "most_severe_injury" => "category",
-    "injuries_total" => "number",
-    "injuries_fatal" => "number",
-    "injuries_incapacitating" => "number",
-    "injuries_non_incapacitating" => "number",
-    "injuries_reported_not_evident" => "number",
-    "injuries_no_indication" => "number",
-    "injuries_unknown" => "number",
-    "crash_hour" => "number",
-    "crash_day_of_week" => "category",
-    "crash_month" => "category",
-    "latitude" => "number",
-    "longitude" => "number",
-    "location" => "text",
-];
-
-# Dynamically generate these by querying the database (instead of manually typing)
-$attributeSortBy = [
-    "crash_date" => ["format" => "date", "min" => "", "max" => ""],
-    "posted_speed_limit" => ["format" => "mph", "min" => 0, "max" => 55],
-    "damage" => ["format" => "$", "min" => 0, "max" => 1500],
-    "date_police_notified" => ["format" => "date", "min" => "", "max" => ""],
-    "num_units" => ["format" => "", "min" => 1, "max" => 10],
-    "injuries_total" => ["format" => "", "min" => 0, "max" => 20],
-    "injuries_fatal" => ["format" => "", "min" => 0, "max" => 20],
-    "injuries_incapacitating" => ["format" => "", "min" => 0, "max" => 20],
-    "injuries_non_incapacitating" => ["format" => "", "min" => 0, "max" => 20],
-    "injuries_reported_not_evident" => ["format" => "", "min" => 0, "max" => 20],
-    "injuries_no_indication" => ["format" => "", "min" => 0, "max" => 20],
-    "injuries_unknown" => ["format" => "", "min" => 0, "max" => 20],
-    "crash_hour" => ["format" => "", "min" => 0, "max" => 24]
-];
-
-# Dynamically generate these by querying the database (instead of manually typing)
-$attributeCategory = [
-    "traffic_control_device" => ["NO CONTROLS", "TRAFFIC SIGNAL", "STOP SIGN/FLASHER", "UNKNOWN",],
-    "device_condition" => ["NO CONTROLS", "FUNCTIONING PROPERLY", "FUNCTIONING IMPROPERLY", "UNKNOWN"],
-    "weather_condition" => ["CLEAR", "SNOW", "UNKNOWN", "CLOUDY/OVERCAST", "SLEET/HAIL", "BLOWING SNOW", "FREEZING RAIN/DRIZZLE", "RAIN", "OTHER", "SEVERE CROSS WIND GATE", "FOG/SMOKE/HAZE"],
-    "lighting_condition" => "category",
-    "first_crash_type" => "category",
-    "trafficway_type" => "category",
-    "alignment" => "category",
-    "roadway_surface_cond" => "category",
-    "road_defect" => "category",
-    "report_type" => "category",
-    "crash_type" => "category",
-    "prim_contributory_cause" => "category",
-    "sec_contributory_cause" => "category",
-    "street_direction" => "category",
-    "beat_of_occurrence" => "category",
-    "most_severe_injury" => "category",
-    "crash_day_of_week" => "category",
-    "crash_month" => "category",
-]
-
+# GENERATE DATA STRUCTURES
+$attributeSortBy = buildRangeMetaData($conn, $rangeAttributes);
+$attributeCategory = buildSingleValueCategoryMetaData($conn, $singleValueCategories);
+$attributeCategory += buildMultiValueCategoryMetaData($conn, $multiValueCategories);
 
 ?>
 
@@ -253,7 +44,7 @@ $attributeCategory = [
         </div>
 
     </div>
-    <div class="row">
+    <div class="row align-items-start">
         <div class="col m-2 p-3 rounded bg-light">
             <div class="col text-center">
                 <h3 class="border-bottom border-3 pb-3">Selection Criteria</h3>
@@ -341,7 +132,7 @@ $attributeCategory = [
 
 
                         // Numeric ranges
-                        if ($attributeTypes[$value] == "number") {
+                        if (isset($rangeAttributes[$value]) && $rangeAttributes[$value]["type"] == "int") {
 
                             $min = $attributeSortBy[$value]["min"];
                             $max = $attributeSortBy[$value]["max"];
@@ -373,7 +164,7 @@ $attributeCategory = [
                         }
 
                         // Date ranges
-                        elseif ($attributeTypes[$value] == "date") {
+                        elseif (isset($rangeAttributes[$value]) && $rangeAttributes[$value]["type"] == "date") {
 
                             echo "
                                 <div class='row border-bottom border-3 pb-3 mb-2'>
@@ -487,7 +278,7 @@ $attributeCategory = [
                     echo "</div></div>
                             <div class='row align-items-center'>
                                 <div class='d-grid gap-2'>
-                                    <button class='btn btn-primary' type='submit'>Sort Result</button>
+                                    <button class='btn btn-primary' type='submit' name='run_query'>Sort Result</button>
                                 </div>
                             </div>";
                     echo "</form>";
@@ -500,35 +291,84 @@ $attributeCategory = [
             <div class="row bg-light rounded">
                 <div class="col text-center border-bottom border-3">
                     <h3 class="pb-2 pt-2">Crash Stats</h3>
-                    <table class='table'>
-                        <tr>
-                            <th scope="row">Crash Count</th>
-                            <td>100</td>
-                        </tr>
-                        <tr>
-                            <th scope="row">Total Injuries</th>
-                            <td>20</td>
-                        </tr>
-                    </table>
                     <?php
                     # TEMP - For Debugging purposes- will remove later (shows structure of POST array)
-                    #echo "<pre>";
-                    #print_r($_POST);
-                    #echo "</pre>";
+                    // echo "<pre>";
+                    // print_r($_POST);
+                    // //echo $attributeSources["weather_condition"]["table"];
+                    // echo "</pre>";
+                    require_once "sql_builder.php";
+
+                    if (isset($_POST['attributes'])) {
+                        $selectedAttributes = $_POST["attributes"];
+                    }
+
+                    // Call the function to build the SQL query based on user input
+                    if (isset($_POST['run_query'])) {
+                        $query = buildSelectQuery(
+                            $selectedAttributes,
+                            $selectionTypes,
+                            $singleValueCategories,
+                            $multiValueCategories,
+                            $secondaryAttributes
+                        );
+
+                        # TEMP - For Debugging purposes- will remove later (shows the generated SQL query)
+                        //echo "<pre>$query</pre>";
+
+                        $result = $conn->query($query);
+                        $count = $result->num_rows;
+                        
+                        // Add more crash stats here as needed
+                        echo "<table class='table'>
+                                <tr>
+                                    <th scope='row'>Crash Count</th>
+                                    <td>" . $count . "</td>
+                                </tr>
+                            </table>";
+
+                        if (!$result) {
+                            die("Query failed: " . $conn->error);
+                        }
+                    }
+
                     ?>
                 </div>
             </div>
             <div class="row mt-2 bg-light rounded">
                 <div class="col text-center ">
                     <h3 class="pb-2 pt-2">Data Display</h3>
-                    <?php #Can update this to work with the results of SQL query instead
-                    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                    <?php
+                    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['run_query'])) {
+
+                        $sortBy = $_POST['sort']['column'] ?? null;
+                        $sortDir = $_POST['sort']['direction'] ?? null;
+                        $arrow = ($sortDir === "DESC") ? "▼" : "▲";
+
                         echo "<table class='table table-striped-columns'><tr>";
-                        foreach ($selectedAttributes as $key => $value) {
-                            echo "<th>" . $value . "</th>";
+
+                        foreach ($selectedAttributes as $attr) {
+
+                            if ($attr === $sortBy) {
+                                echo "<th class='table-warning fw-bold'>$attr $arrow</th>";
+                            } else {
+                                echo "<th>$attr</th>";
+                            }
                         }
-                        echo "</tr></table>";
+
+                        echo "</tr>";
+
+                        while ($row = $result->fetch_assoc()) {
+                            echo "<tr>";
+                            foreach ($selectedAttributes as $attr) {
+                                echo "<td>" . htmlspecialchars($row[$attr] ?? "") . "</td>";
+                            }
+                            echo "</tr>";
+                        }
+
+                        echo "</table>";
                     }
+
                     ?>
                 </div>
             </div>
