@@ -39,7 +39,7 @@ $attributes = [
     // "crash_month",
     "latitude",
     "longitude",
-];
+]; // attributes from crash table
 
 # Using separate list for user friendly names
 $attribute_names = [
@@ -150,7 +150,7 @@ $attributeSections = [
 $attributeTypes = [
     "crash_date" => "date",
     "posted_speed_limit" => "number",
-    "traffic_control_device" => "category",
+    "traffic_control_device" => "string", // 04/17 editted: changed from category to string.
     "device_condition" => "string",
     "weather_condition" => "category",
     "lighting_condition" => "category",
