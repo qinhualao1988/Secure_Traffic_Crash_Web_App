@@ -20,6 +20,98 @@ function buildSelectQuery($selectedAttributes, $selectionTypes, $singleValueCate
     return "$select $from $where $order";
 }
 
+// 04/15 - new function
+function buildStatsQuery($post, $selectionTypes, $singleValueCategories, $multiValueCategories, $secondaryAttributes)
+{
+    $joins = [];
+
+    // Stats always need crashinjuries once
+    $joins["crashinjuries"] = "LEFT JOIN crashinjuries ON crash.crash_record_id = crashinjuries.crash_record_id";
+
+    // Add joins needed for category filters
+    if (isset($post['categories'])) {
+        foreach ($post['categories'] as $attr => $labels) {
+            if (!isset($selectionTypes[$attr])) {
+                continue;
+            }
+
+            if ($selectionTypes[$attr] === "single_lookup") {
+                $meta = $singleValueCategories[$attr];
+
+                $fk_table  = $meta["fk_table"];
+                $fk_column = $meta["fk_column"];
+                $lookup    = $meta["lookup_table"];
+                $lookup_id = $meta["lookup_id"];
+
+                // join FK table if needed, but don't duplicate crashinjuries
+                if ($fk_table !== "crash" && $fk_table !== "crashinjuries") {
+                    $joins[$fk_table] = "LEFT JOIN $fk_table ON crash.crash_record_id = $fk_table.crash_record_id";
+                }
+
+                $joins[$lookup] = "LEFT JOIN $lookup ON $fk_table.$fk_column = $lookup.$lookup_id";
+            }
+
+            if ($selectionTypes[$attr] === "multi_lookup") {
+                $meta = $multiValueCategories[$attr];
+
+                $junction  = $meta["junction_table"];
+                $crash_fk  = $meta["junction_crash_fk"];
+                $cat_fk    = $meta["junction_cat_fk"];
+                $lookup    = $meta["lookup_table"];
+                $lookup_id = $meta["lookup_id"];
+
+                $joins[$junction] = "LEFT JOIN $junction ON crash.crash_record_id = $junction.$crash_fk";
+                $joins[$lookup]   = "LEFT JOIN $lookup ON $junction.$cat_fk = $lookup.$lookup_id";
+            }
+        }
+    }
+
+    // Add joins needed for range filters on secondary tables
+    if (isset($post['ranges'])) {
+        foreach ($post['ranges'] as $attr => $range) {
+            if (!isset($selectionTypes[$attr])) {
+                continue;
+            }
+
+            if ($selectionTypes[$attr] === "secondary") {
+                $table = $secondaryAttributes[$attr];
+
+                // crashinjuries already joined above
+                if ($table === "crashinjuries") {
+                    continue;
+                }
+
+                $joins[$table] = "LEFT JOIN $table ON crash.crash_record_id = $table.crash_record_id";
+            }
+        }
+    }
+
+    // Reuse existing WHERE builder
+    $where = buildWhereClause(
+        $post,
+        $selectionTypes,
+        $singleValueCategories,
+        $multiValueCategories,
+        $secondaryAttributes
+    );
+
+    $joinSql = implode(" ", $joins);
+
+    return "
+        SELECT
+            COUNT(DISTINCT crash.crash_record_id) AS crash_count,
+            COALESCE(SUM(crashinjuries.injuries_total), 0) AS total_injuries,
+            COALESCE(SUM(crashinjuries.injuries_fatal), 0) AS total_fatal,
+            COALESCE(SUM(crashinjuries.injuries_incapacitating), 0) AS total_incapacitating,
+            COALESCE(SUM(crashinjuries.injuries_non_incapacitating), 0) AS total_non_incapacitating,
+            COALESCE(AVG(crash.posted_speed_limit), 0) AS avg_speed_limit
+        FROM crash
+        $joinSql
+        $where
+    ";
+}
+
+
 // Function to build the SELECT clause based on selected attributes and their types
 function buildSelectClause($selectedAttributes, $selectionTypes, $singleValueCategories, $multiValueCategories, $secondaryAttributes)
 {
@@ -75,10 +167,18 @@ function buildJoinClause($selectedAttributes, $selectionTypes, $singleValueCateg
 
         switch ($selectionTypes[$attr]) {
 
-            case "secondary":
-                $table = $secondaryAttributes[$attr];
-                $joins[$table] = "NATURAL JOIN $table";
-                break;
+        case "secondary":
+            $table = $secondaryAttributes[$attr];
+
+            if ($table === "street") {
+                $joins[$table] = "JOIN street ON crash.street_id = street.street_id";
+            } elseif ($table === "trafficcontrol") {
+                $joins[$table] = "JOIN trafficcontrol ON crash.crash_record_id = trafficcontrol.crash_record_id";
+            } elseif ($table === "crashinjuries") {
+                $joins[$table] = "JOIN crashinjuries ON crash.crash_record_id = crashinjuries.crash_record_id";
+            }
+
+            break;
 
             case "single_lookup":
                 $meta = $singleValueCategories[$attr];
@@ -90,7 +190,7 @@ function buildJoinClause($selectedAttributes, $selectionTypes, $singleValueCateg
 
                 // Make sure FK table is joined (if it's not crash)
                 if ($fk_table !== "crash") {
-                    $joins[$fk_table] = "NATURAL JOIN $fk_table";
+                    $joins[$fk_table] = "JOIN $fk_table ON crash.crash_record_id = $fk_table.crash_record_id";
                 }
 
                 // Join lookup table
