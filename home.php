@@ -12,7 +12,7 @@
 
 $servername = "localhost";
 $username = "root";  //user name
-$password = "";  //password used to login MySQL server - replace with your own password if you have one set
+$password = "123456";  //password used to login MySQL server - replace with your own password if you have one set
 $dbname = "trafficcrash";
 
 // Create connection
@@ -287,23 +287,15 @@ $attributeCategory += buildMultiValueCategoryMetaData($conn, $multiValueCategori
 
             </div>
         </div>
+
+        <!-- 04 / 17 edited: Stats and Data Display Section -->
         <div class="col ms-2 p-2">
             <div class="row bg-light rounded">
                 <div class="col text-center border-bottom border-3">
                     <h3 class="pb-2 pt-2">Crash Stats</h3>
                     <?php
-                    # TEMP - For Debugging purposes- will remove later (shows structure of POST array)
-                    // echo "<pre>";
-                    // print_r($_POST);
-                    // //echo $attributeSources["weather_condition"]["table"];
-                    // echo "</pre>";
                     require_once "sql_builder.php";
 
-                    if (isset($_POST['attributes'])) {
-                        $selectedAttributes = $_POST["attributes"];
-                    }
-
-                    // Call the function to build the SQL query based on user input
                     if (isset($_POST['run_query'])) {
                         $query = buildSelectQuery(
                             $selectedAttributes,
@@ -313,23 +305,46 @@ $attributeCategory += buildMultiValueCategoryMetaData($conn, $multiValueCategori
                             $secondaryAttributes
                         );
 
-                        # TEMP - For Debugging purposes- will remove later (shows the generated SQL query)
-                        //echo "<pre>$query</pre>";
-
                         $result = $conn->query($query);
-                        $count = $result->num_rows;
-                        
-                        // Add more crash stats here as needed
-                        echo "<table class='table'>
-                                <tr>
-                                    <th scope='row'>Crash Count</th>
-                                    <td>" . $count . "</td>
-                                </tr>
-                            </table>";
 
                         if (!$result) {
                             die("Query failed: " . $conn->error);
                         }
+
+                        $statsQuery = buildStatsQuery(
+                            $_POST,
+                            $selectionTypes,
+                            $singleValueCategories,
+                            $multiValueCategories,
+                            $secondaryAttributes
+                        );
+
+                        $statsResult = $conn->query($statsQuery);
+
+                        if (!$statsResult) {
+                            die("Stats query failed: " . $conn->error);
+                        }
+
+                        $stats = $statsResult->fetch_assoc();
+
+                        echo "<table class='table'>
+                                <tr>
+                                    <th scope='row'>Crash Count</th>
+                                    <td>" . htmlspecialchars($stats['crash_count']) . "</td>
+                                </tr>
+                                <tr>
+                                    <th scope='row'>Total Injuries</th>
+                                    <td>" . htmlspecialchars($stats['total_injuries']) . "</td>
+                                </tr>
+                                <tr>
+                                    <th scope='row'>Fatal Injuries</th>
+                                    <td>" . htmlspecialchars($stats['total_fatal']) . "</td>
+                                </tr>
+                                <tr>
+                                    <th scope='row'>Average Speed Limit</th>
+                                    <td>" . round($stats['avg_speed_limit'], 1) . "</td>
+                                </tr>
+                            </table>";
                     }
 
                     ?>
