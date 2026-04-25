@@ -20,7 +20,7 @@ $attributes = [
     "date_police_notified",
     "prim_contributory_cause",
     "sec_contributory_cause",
-    "street_no",
+    //"street_no",
     "street_direction",
     "street_name",
     "beat_of_occurrence",
@@ -93,7 +93,7 @@ $attributeSections = [
     ],
 
     "Location" => [
-        "street_no",
+        //"street_no",
         "street_direction",
         "street_name",
         "beat_of_occurrence",
@@ -167,7 +167,7 @@ $attributeTypes = [
     "date_police_notified" => "date",
     "prim_contributory_cause" => "category",
     "sec_contributory_cause" => "category",
-    "street_no" => "number",
+    //"street_no" => "number",
     "street_direction" => "string",
     "street_name" => "string",
     "beat_of_occurrence" => "number",
@@ -200,9 +200,10 @@ $selectionTypes = [
     "beat_of_occurrence" => "main",
     "num_units" => "main",
     "report_type" => "main",
+    "latitude" => "main",
     "longitude" => "main",
 
-    "street_no" => "secondary",
+    //"street_no" => "secondary",
     "street_direction" => "secondary",
     "street_name" => "secondary",
 
@@ -246,9 +247,44 @@ $rangeAttributes = [
         "column" => "crash_date",
         "type" => "date"
     ],
+    "date_police_notified" => [
+        "table" => "crash",
+        "column" => "date_police_notified",
+        "type" => "date"
+    ],
     "injuries_total" => [
         "table" => "crashinjuries",
         "column" => "injuries_total",
+        "type" => "int"
+    ],
+    "injuries_fatal" => [
+        "table" => "crashinjuries",
+        "column" => "injuries_fatal",
+        "type" => "int"
+    ],
+    "injuries_incapacitating" => [
+        "table" => "crashinjuries",
+        "column" => "injuries_incapacitating",
+        "type" => "int"
+    ],
+    "injuries_non_incapacitating" => [
+        "table" => "crashinjuries",
+        "column" => "injuries_non_incapacitating",
+        "type" => "int"
+    ],
+    "injuries_reported_not_evident" => [
+        "table" => "crashinjuries",
+        "column" => "injuries_reported_not_evident",
+        "type" => "int"
+    ],
+    "injuries_no_indication" => [
+        "table" => "crashinjuries",
+        "column" => "injuries_no_indication",
+        "type" => "int"
+    ],
+    "injuries_unknown" => [
+        "table" => "crashinjuries",
+        "column" => "injuries_unknown",
         "type" => "int"
     ],
     "num_units" => [
@@ -256,6 +292,26 @@ $rangeAttributes = [
         "column" => "num_units",
         "type" => "int"
     ],
+    "latitude" => [
+        "table" => "crash",
+        "column" => "latitude",
+        "type" => "double"
+    ],
+    "longitude" => [
+        "table" => "crash",
+        "column" => "longitude",
+        "type" => "double"
+    ],
+    "beat_of_occurrence" => [
+        "table" => "crash",
+        "column" => "beat_of_occurrence",
+        "type" => "int"
+    ],
+    // "street_no" => [
+    //     "table" => "street",
+    //     "column" => "street_no",
+    //     "type" => "int"
+    // ]
     // etc.
 ];
 
@@ -350,7 +406,7 @@ $multiValueCategories = [
 
 // Keeps track of which attributes come from which tables for building SELECT and JOIN clauses
 $secondaryAttributes = [
-    "street_no" => "street",
+    //"street_no" => "street",
     "street_direction" => "street",
     "street_name" => "street",
 

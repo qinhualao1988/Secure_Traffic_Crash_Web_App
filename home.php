@@ -12,7 +12,7 @@
 
 $servername = "localhost";
 $username = "root";  //user name
-$password = "123456";  //password used to login MySQL server - replace with your own password if you have one set
+$password = "";  //password used to login MySQL server - replace with your own password if you have one set
 $dbname = "trafficcrash";
 
 // Create connection
@@ -86,6 +86,7 @@ $attributeCategory += buildMultiValueCategoryMetaData($conn, $multiValueCategori
                     $selectedAttributes = $_POST['attributes'] ?? [];
                     echo "<form method='POST' action=''>";
                     #Sort By Section
+
                     echo "<div class='row border-bottom border-3 pb-3 mb-2'>
                     <div class='col-12 bg-warning rounded-start-pill p-1 mb-2'>Sort By</div>
                     <div class='col'>
@@ -122,16 +123,13 @@ $attributeCategory += buildMultiValueCategoryMetaData($conn, $multiValueCategori
                     ";
 
                     # Range Filter Section - two separate formats- one for numbers, one for dates
-                    echo "<div class='row'>
+                    echo "<div class='row border-bottom border-3 pb-3 mb-2 align-items-center'>
                             <div class='col-12 bg-warning rounded-start-pill p-1 mb-2'>Range</div>";
 
                     foreach ($selectedAttributes as $key => $value) {
 
-                        # Because there is a second seperate submit button, have to add back in the chosen attributes
                         echo "<input type='hidden' name='attributes[]' value='" . htmlspecialchars($value) . "'>";
 
-
-                        // Numeric ranges
                         if (isset($rangeAttributes[$value]) && $rangeAttributes[$value]["type"] == "int") {
 
                             $min = $attributeSortBy[$value]["min"];
@@ -142,26 +140,92 @@ $attributeCategory += buildMultiValueCategoryMetaData($conn, $multiValueCategori
                                     <h6 class='pt-1'>" . htmlspecialchars($value) . "</h6>
 
                                     <div class='col'>
-                                        <label for='range_{$value}_min' class='form-label'>Minimum</label>
+                                        <label for='range_{$value}_min' class='form-label'>
+                                            Minimum: <span id='range_{$value}_min_val' class='border border-primary rounded ps-2 pe-2 border-2'>{$min}</span>
+                                        </label>
                                         <input type='range'
                                             class='form-range'
                                             id='range_{$value}_min'
                                             name='ranges[{$value}][min]'
                                             min='{$min}'
-                                            max='{$max}'>
+                                            max='{$max}'
+                                            value='{$min}'>
                                     </div>
 
                                     <div class='col'>
-                                        <label for='range_{$value}_max' class='form-label'>Maximum</label>
+                                        <label for='range_{$value}_max' class='form-label'>
+                                            Maximum: <span id='range_{$value}_max_val' class='border border-primary rounded ps-2 pe-2 border-2'>{$max}</span>
+                                        </label>
                                         <input type='range'
                                             class='form-range'
                                             id='range_{$value}_max'
                                             name='ranges[{$value}][max]'
                                             min='{$min}'
-                                            max='{$max}'>
+                                            max='{$max}'
+                                            value='{$max}'>
                                     </div>
-                                </div>";
+                                </div>
+
+                                <script>
+                                    document.getElementById('range_{$value}_min').addEventListener('input', function() {
+                                        document.getElementById('range_{$value}_min_val').textContent = this.value;
+                                    });
+
+                                    document.getElementById('range_{$value}_max').addEventListener('input', function() {
+                                        document.getElementById('range_{$value}_max_val').textContent = this.value;
+                                    });
+                                </script>
+                                ";
+                        } elseif (isset($rangeAttributes[$value]) && $rangeAttributes[$value]["type"] == "double") {
+
+                            $min = $attributeSortBy[$value]["min"];
+                            $max = $attributeSortBy[$value]["max"];
+
+                            echo "
+                                <div class='row border-bottom border-3 pb-3 mb-2'>
+                                    <h6 class='pt-1'>" . htmlspecialchars($value) . "</h6>
+
+                                    <div class='col'>
+                                        <label for='range_{$value}_min' class='form-label'>
+                                            Minimum: <span id='range_{$value}_min_val' class='border border-primary rounded ps-2 pe-2 border-2'>{$min}</span>
+                                        </label>
+                                        <input type='range'
+                                            class='form-range'
+                                            id='range_{$value}_min'
+                                            name='ranges[{$value}][min]'
+                                            min='{$min}'
+                                            max='{$max}'
+                                            value='{$min}'
+                                            step='0.01'>
+                                    </div>
+
+                                    <div class='col'>
+                                        <label for='range_{$value}_max' class='form-label'>
+                                            Maximum: <span id='range_{$value}_max_val' class='border border-primary rounded ps-2 pe-2 border-2'>{$max}</span>
+                                        </label>
+                                        <input type='range'
+                                            class='form-range'
+                                            id='range_{$value}_max'
+                                            name='ranges[{$value}][max]'
+                                            min='{$min}'
+                                            max='{$max}'
+                                            value='{$max}'
+                                            step='0.01'>
+                                    </div>
+                                </div>
+
+                                <script>
+                                    document.getElementById('range_{$value}_min').addEventListener('input', function() {
+                                        document.getElementById('range_{$value}_min_val').textContent = this.value;
+                                    });
+
+                                    document.getElementById('range_{$value}_max').addEventListener('input', function() {
+                                        document.getElementById('range_{$value}_max_val').textContent = this.value;
+                                    });
+                                </script>
+                                ";
                         }
+
 
                         // Date ranges
                         elseif (isset($rangeAttributes[$value]) && $rangeAttributes[$value]["type"] == "date") {
@@ -297,6 +361,10 @@ $attributeCategory += buildMultiValueCategoryMetaData($conn, $multiValueCategori
                     require_once "sql_builder.php";
 
                     if (isset($_POST['run_query'])) {
+                        if (empty($_POST['sort']['column'])) {
+                            echo "<div class='alert alert-danger'>Please select an attribute to sort by.</div>";
+                            return;
+                        }
                         $query = buildSelectQuery(
                             $selectedAttributes,
                             $selectionTypes,
