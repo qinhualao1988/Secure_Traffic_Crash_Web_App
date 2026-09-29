@@ -10,9 +10,9 @@
 
 <?php
 
-$servername = "localhost";
-$username = "root";  //user name
-$password = "";  //password used to login MySQL server - replace with your own password if you have one set
+$servername = "mysql";
+$username = "trafficuser";  
+$password = getenv("MYSQL_PASSWORD");  
 $dbname = "trafficcrash";
 
 // Create connection
