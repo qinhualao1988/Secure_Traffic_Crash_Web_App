@@ -13,3 +13,9 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Personal server documentation
+home_server_mysql_login.md
+
+# JetBrains / PhpStorm
+.idea/
